@@ -52,7 +52,6 @@ def main():
         urls.append(url)
         tempUrl.remove(url)
         res = requests.get(url,Headers)
-        print(res)
         parseurl = urlparse(f"{url}")
         host = '{uri.netloc}'.format(uri=parseurl)
         soup = BeautifulSoup(res.text,features="html.parser")
