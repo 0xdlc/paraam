@@ -45,41 +45,44 @@ def main():
   tempUrl = [args.u]
   urls = []
   tempList = []
-  for d in range(1,args.depth):
+  gibberish = ['<', '^', '(', ')']
+  for d in range(0,args.depth):
     for url in tempUrl:
-      print(url)
-      urls.append(url)
-      tempUrl.remove(url)
-      res = requests.get(url,Headers)
-      print(res)
-      parseurl = urlparse(f"{url}")
-      host = '{uri.netloc}'.format(uri=parseurl)
-      urls = [f"{args.u}"]
-      soup = BeautifulSoup(res.text,features="html.parser")
-      #Using bs4 to get inside src,href,... becuase we cant regex some of them
-      regex = r"(?:https?:)?\w*\/[^\"'\s]*(?:\/[^\"'\s]+)?\/?"
-      regexedUrls = re.findall(regex,res.text)
-      for i in soup.find_all('a',href=True):
-        regexedUrls.append(i['href'])
-      for i in soup.find_all('script',src=True):
-        regexedUrls.append(i['src'])
-      for i in soup.find_all('link',href=True):
-        regexedUrls.append(i['href'])
-      for i in regexedUrls: 
-        print(i)
-        if i.find('>') == 0:
-          continue
-        if i.find(f"{host}") == 0:
-            tempList.append(i)
-        elif i.find('http') == -1:
-          if i.startswith('/') is True:
-            tempList.append(f'https://{host}{i}')
-          else:
-            tempList.append(f'https://{host}/{i}')
-    print(f"Going In depth {d+1}")
+      try:
+        urls.append(url)
+        tempUrl.remove(url)
+        res = requests.get(url,Headers)
+        print(res)
+        parseurl = urlparse(f"{url}")
+        host = '{uri.netloc}'.format(uri=parseurl)
+        soup = BeautifulSoup(res.text,features="html.parser")
+        #Using bs4 to get inside src,href,... becuase we cant regex some of them
+        regex = r"(?:https?:)?\w*\/[^\"'\s]*(?:\/[^\"'\s]+)?\/?"
+        regexedUrls = re.findall(regex,res.text)
+        for i in soup.find_all('a',href=True):
+          regexedUrls.append(i['href'])
+        for i in soup.find_all('script',src=True):
+          regexedUrls.append(i['src'])
+        for i in soup.find_all('link',href=True):
+          regexedUrls.append(i['href'])
+        for i in regexedUrls: 
+          for gibber in gibberish:
+            if i.find(gibber) == 0:
+              continue
+          if i.find(f"{host}") == 0:
+              tempList.append(i)
+          elif i.find('http') == -1:
+            if i.startswith('/') is True:
+              tempList.append(f'https://{host}{i}')
+            else:
+              tempList.append(f'https://{host}/{i}')
+      except Exception as e:
+        print(f"[-] Error: {e}")
+        pass
+    print(f"[+] Going In depth {d+1}")
     tempUrl = tempList
     tempList = []
-        
+          
   #Removin duplicates V:
   urls = list(set(urls))
   print(urls)
@@ -88,18 +91,17 @@ def main():
     for i in urls:
       print(f'{i}\n')
 
-  else:
-    for j in urls: 
-      if j.endswith(skips) is False:
-        urlreq = requests.get(j,Headers)
-        words = re.findall(r"\b[^\W\d]\w*\b",urlreq.text)
-        if "sourceMappingURL" in words:
-          print(f"[!] {j} has Source-Map URL")
-        for i in words:
-            f = open(f"{dir}/{host}.params", "a+")
-            f.write(f"{i}\n")
-            f.close()
-      subprocess.call(["sort","-u","-o",f"{dir}/{host}.params",f"{dir}/{host}.params"])
+  for j in urls: 
+    if j.endswith(skips) is False:
+      urlreq = requests.get(j,Headers)
+      words = re.findall(r"\b[^\W\d]\w*\b",urlreq.text)
+      if "sourceMappingURL" in words:
+        print(f"[!] {j} has Source-Map URL")
+      for i in words:
+          f = open(f"{dir}/{host}.params", "a+")
+          f.write(f"{i}\n")
+          f.close()
+    subprocess.call(["sort","-u","-o",f"{dir}/{host}.params",f"{dir}/{host}.params"])
     count = subprocess.check_output(["wc","-l",f"{dir}/{host}.params"],text=True)
     print(f'[+] Wordcount: {count}')
     conn = sqlite3.connect('all_parsms.db')
