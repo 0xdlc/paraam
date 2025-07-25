@@ -35,6 +35,7 @@ def main():
   parser.add_argument('-permute', required=False,nargs='?', const='true', metavar='Make permutation of words (Adding ._- to the words)', type=bool)
   parser.add_argument('-domain_only', required=False,nargs='?', const='true', metavar='only scan the given url (Do not crawl for other urls)', type=bool)
   parser.add_argument('-x8', required=False,nargs='?', const='true', metavar='test the words with x8 after being done', type=bool)
+  parser.add_argument('-su', required=False,nargs='?', const='true', metavar='save urls', type=bool)
   dir = os.path.expanduser('~/params')
   args = parser.parse_args()
   Headers = ({'User-Agent':
@@ -108,8 +109,11 @@ def main():
   # print("[+] Writing in database...")
   # conn = sqlite3.connect('all_parsms.db')
   # cursor = conn.cursor()
-    
-
+  if args.su:
+    for i in urls:
+      f = open(f"{dir}/{host}.urls", "a+")
+      f.write(f"{i}\n")
+      f.close()
   if args.permute:
     line = open(f"{dir}/{host}.params", "r")
     file = open(f"{dir}/{host}.params.permutes", "a+")
