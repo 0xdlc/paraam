@@ -67,7 +67,7 @@ def main():
         for i in regexedUrls: 
           for gibber in gibberish:
             if i.find(gibber) == 0:
-              continue
+              regexedUrls.remove(i)
           if i.find(f"{host}") == 0:
               tempList.append(i)
           elif i.find('http') == -1:
