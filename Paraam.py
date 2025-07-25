@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/python3
+#!/Users/Mo/.rye/shims/python
 
 import requests
 import argparse
@@ -7,6 +7,9 @@ from urllib.parse import urlparse
 import subprocess
 import os
 from bs4 import BeautifulSoup
+import sqlite3
+
+
 
 
 def finder(url,headers,host,dir):
@@ -27,7 +30,8 @@ def main():
   permutes = ['.','_','-']
   parser = argparse.ArgumentParser()
   parser.add_argument('-u', required=True, default=False, metavar='url', type=str)
-  parser.add_argument('-show_urls', required=False,nargs='?', const='true', metavar='Show the urls', type=bool)
+  parser.add_argument('-depth', required=False, default=1, metavar='recursive depth that the crawler will look for urls: default=1 -> just the main page with urls inside', type=int)
+  parser.add_argument('-debug', required=False,nargs='?', const='true', metavar='debug mode', type=bool)
   parser.add_argument('-permute', required=False,nargs='?', const='true', metavar='Make permutation of words (Adding ._- to the words)', type=bool)
   parser.add_argument('-domain_only', required=False,nargs='?', const='true', metavar='only scan the given url (Do not crawl for other urls)', type=bool)
   parser.add_argument('-x8', required=False,nargs='?', const='true', metavar='test the words with x8 after being done', type=bool)
@@ -38,37 +42,52 @@ def main():
       (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',\
       'Accept-Language': 'en-US, en;q=0.5'})
   print(f'[+] Program: {args.u}')
-  res = requests.get(args.u,Headers)
-  parseurl = urlparse(f"{args.u}")
-  host = '{uri.netloc}'.format(uri=parseurl)
-  urls = [f"{args.u}"]
-  soup = BeautifulSoup(res.text,features="html.parser")
-  #Using bs4 to get inside src,href,... becuase we cant regex some of them
-  regex = r"(?:https?:)?\w*\/[^\"'\s]*(?:\/[^\"'\s]+)?\/?"
-  all_urls = re.findall(regex,res.text)
-  for i in soup.find_all('a',href=True):
-    all_urls.append(i['href'])
-  for i in soup.find_all('script',src=True):
-    all_urls.append(i['src'])
-  for i in soup.find_all('link',href=True):
-    all_urls.append(i['href'])
-  for i in all_urls: 
-    if i.find('>') == -1:
-      if i.find(f"{host}") == 0:
-          urls.append(i)
-      elif i.find('http') == -1:
-        if i.startswith('/') is True:
-          urls.append(f'https://{host}{i}')
-        else:
-          urls.append(f'https://{host}/{i}')
-#Removin duplicates V:
+  tempUrl = [args.u]
+  urls = []
+  tempList = []
+  for d in range(1,args.depth):
+    for url in tempUrl:
+      print(url)
+      urls.append(url)
+      tempUrl.remove(url)
+      res = requests.get(url,Headers)
+      print(res)
+      parseurl = urlparse(f"{url}")
+      host = '{uri.netloc}'.format(uri=parseurl)
+      urls = [f"{args.u}"]
+      soup = BeautifulSoup(res.text,features="html.parser")
+      #Using bs4 to get inside src,href,... becuase we cant regex some of them
+      regex = r"(?:https?:)?\w*\/[^\"'\s]*(?:\/[^\"'\s]+)?\/?"
+      regexedUrls = re.findall(regex,res.text)
+      for i in soup.find_all('a',href=True):
+        regexedUrls.append(i['href'])
+      for i in soup.find_all('script',src=True):
+        regexedUrls.append(i['src'])
+      for i in soup.find_all('link',href=True):
+        regexedUrls.append(i['href'])
+      for i in regexedUrls: 
+        print(i)
+        if i.find('>') == 0:
+          continue
+        if i.find(f"{host}") == 0:
+            tempList.append(i)
+        elif i.find('http') == -1:
+          if i.startswith('/') is True:
+            tempList.append(f'https://{host}{i}')
+          else:
+            tempList.append(f'https://{host}/{i}')
+    print(f"Going In depth {d+1}")
+    tempUrl = tempList
+    tempList = []
+        
+  #Removin duplicates V:
   urls = list(set(urls))
+  print(urls)
   print(f'[+] Found {len(urls)} urls')
-  if args.show_urls:    
+  if args.debug:    
     for i in urls:
       print(f'{i}\n')
-  if args.domain_only:
-    finder(args.u,Headers,host,dir)
+
   else:
     for j in urls: 
       if j.endswith(skips) is False:
@@ -82,7 +101,12 @@ def main():
             f.close()
       subprocess.call(["sort","-u","-o",f"{dir}/{host}.params",f"{dir}/{host}.params"])
     count = subprocess.check_output(["wc","-l",f"{dir}/{host}.params"],text=True)
-    print(f'[+] Wordcount: {count}')        
+    print(f'[+] Wordcount: {count}')
+    conn = sqlite3.connect('all_parsms.db')
+    cursor = conn.cursor()
+    
+    print("[+] Writing in database...")
+
   if args.permute:
     line = open(f"{dir}/{host}.params", "r")
     file = open(f"{dir}/{host}.params.permutes", "a+")
