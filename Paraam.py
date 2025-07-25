@@ -100,7 +100,7 @@ def main():
           f = open(f"{dir}/{host}.params", "a+")
           f.write(f"{i}\n")
           f.close()
-  subprocess.call(["sort","-u","-o",f"{dir}/{host}.params",f"{dir}/{host}.params"])
+    subprocess.call(["sort","-u","-o",f"{dir}/{host}.params",f"{dir}/{host}.params"])
   count = subprocess.check_output(["wc","-l",f"{dir}/{host}.params"],text=True)
   print(f'[+] Wordcount: {count}')
   
