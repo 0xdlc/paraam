@@ -65,7 +65,7 @@ def main():
           regexedUrls.append(i['src'])
         for i in soup.find_all('link',href=True):
           regexedUrls.append(i['href'])
-        for i in regexedUrls: 
+        for i in regexedUrls[:] : 
           for gibber in gibberish:
             if gibber in i:
               regexedUrls.remove(i)
