@@ -83,7 +83,7 @@ def main():
     tempList = []
           
   #Removin duplicates V:
-  urls = list(set(urls))
+  urls = list(set(urls)) #Unique the urls
   print(urls)
   print(f'[+] Found {len(urls)} urls')
   if args.debug:    
@@ -100,13 +100,14 @@ def main():
           f = open(f"{dir}/{host}.params", "a+")
           f.write(f"{i}\n")
           f.close()
-    subprocess.call(["sort","-u","-o",f"{dir}/{host}.params",f"{dir}/{host}.params"])
-    count = subprocess.check_output(["wc","-l",f"{dir}/{host}.params"],text=True)
-    print(f'[+] Wordcount: {count}')
-    conn = sqlite3.connect('all_parsms.db')
-    cursor = conn.cursor()
+  subprocess.call(["sort","-u","-o",f"{dir}/{host}.params",f"{dir}/{host}.params"])
+  count = subprocess.check_output(["wc","-l",f"{dir}/{host}.params"],text=True)
+  print(f'[+] Wordcount: {count}')
+  
+  # print("[+] Writing in database...")
+  # conn = sqlite3.connect('all_parsms.db')
+  # cursor = conn.cursor()
     
-    print("[+] Writing in database...")
 
   if args.permute:
     line = open(f"{dir}/{host}.params", "r")
