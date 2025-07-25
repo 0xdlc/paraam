@@ -66,7 +66,7 @@ def main():
           regexedUrls.append(i['href'])
         for i in regexedUrls: 
           for gibber in gibberish:
-            if i.find(gibber) == 0:
+            if gibber in i:
               regexedUrls.remove(i)
         for i in regexedUrls: 
           if i.find(f"{host}") == 0:
@@ -79,7 +79,7 @@ def main():
       except Exception as e:
         print(f"[-] Error: {e}")
         pass
-    print(f"[+] Going In depth {d+1}")
+    print(f"[+] Going to depth {d+1}")
     tempUrl = tempList
     tempList = []
           
